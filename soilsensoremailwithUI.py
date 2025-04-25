@@ -5,30 +5,29 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
 
-# GPIOsettings
+# GPIO settings
 channel = 21
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(channel, GPIO.IN)
 
-# emailsettings
+# Email settings
 smtp_server = "smtp.qq.com"
 smtp_port = 587
 sender_email = "1247088821@qq.com"
 sender_password = "bsktpyvcdqcabaaj"
 receiver_email = "2579693602@qq.com"
 
-# 
 last_status = None
 status_messages = {
-    True: "[Real-time Status] Dry! ✖ (GPIO HIGH)",
-    False: "[Real-time Status] Damp ✓ (GPIO LOW)"
+    True: "[Current Status] Dry! (GPIO HIGH)",
+    False: "[Current Status] Damp! (GPIO LOW)"
 }
 
 def create_email_html(status, message):
-    """Email HTML UI"""
+    """EmailHTML UI"""
     status_icon = "❌" if status == "Dry" else "✅"
     status_color = "#FF5252" if status == "Dry" else "#4CAF50"
-    action_text = "Need Water!" if status == "Dry" else "Dosen't Need Water!"
+    action_text = "Needs Water!" if status == "Dry" else "Doesn't Need Water!"
     
     return f"""
 <html>
@@ -60,17 +59,17 @@ def create_email_html(status, message):
             </div>
             
             <div>
-                <h3>📊 Detals</h3>
+                <h3>📊 Details</h3>
                 <ul>
-                    <li><strong>Detection Time: </strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</li>
-                    <li><strong>Sendor Value: </strong> {"HIGH (Dry)" if status == "Dry" else "LOW (Damp)"}</li>
-                    <li><strong>Next Detection Time: </strong> {get_next_check_time()}</li>
+                    <li><strong>Detection Time:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</li>
+                    <li><strong>Sensor Value:</strong> {"HIGH (Dry)" if status == "Dry" else "LOW (Damp)"}</li>
+                    <li><strong>Next Detection Time:</strong> {get_next_check_time()}</li>
                 </ul>
             </div>
             
             <div class="footer">
-                <p>This Email Wat Automatically Sent by Raspberry Pi</p>
-                <p>© 2025 Soil Sensor System</p>
+                <p>This Email Was Automatically Sent by Raspberry Pi. </p>
+                <p>© 2025 Smart Soil Sensor System</p>
             </div>
         </div>
     </body>
@@ -78,9 +77,9 @@ def create_email_html(status, message):
 """
 
 def get_next_check_time():
-    """Get Next Time for Inspection"""
+    """Get Next Detection Time"""
     now = datetime.now()
-    check_times = [(8, 0), (12, 0), (14, 30), (16, 0), (20, 0)]
+    check_times = [(8, 0), (12, 0), (14, 30), (16, 0), (21, 0)]
     current_time = (now.hour, now.minute)
     
     for time in check_times:
@@ -90,30 +89,30 @@ def get_next_check_time():
     return "Tomorrow 8:00"
 
 def check_moisture():
-    """Monitor Soil Moisture"""
+    """Soil Sensor"""
     current_state = GPIO.input(channel)
     return current_state, "Dry" if current_state else "Damp"
 
 def display_status(state):
-    """Real-time Display of Status"""
+    """show the status"""
     global last_status
     if state != last_status:
         print("\n" + "="*40)
         print(status_messages[state])
-        print(f"Detection Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Check Times: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("="*40 + "\n")
         last_status = state
 
 def send_email(status, message):
-    """sendHtmlEamil"""
-    subject = f"🌱 Plant{'Needs Water!' if status == 'Dry' else 'Damp'} - {datetime.now().strftime('%H:%M')}"
+    """send HTML email"""
+    subject = f"🌱 Plant{'Needs Water!' if status == 'Dry' else 'It is all good!'} - {datetime.now().strftime('%H:%M')}"
     
     msg = MIMEMultipart('alternative')
     msg['From'] = sender_email
     msg['To'] = receiver_email
     msg['Subject'] = subject
     
-    # HTML
+    # Create HTML
     html_content = create_email_html(status, message)
     
     msg.attach(MIMEText(html_content, 'html'))
@@ -123,7 +122,7 @@ def send_email(status, message):
         server.starttls()
         server.login(sender_email, sender_password)
         server.sendmail(sender_email, receiver_email, msg.as_string())
-        print(f"{datetime.now().strftime('%H:%M')} - Email was Sent Sucessfully: {status}")
+        print(f"{datetime.now().strftime('%H:%M')} - Send Email Sucessfully: {status}")
     except Exception as e:
         print(f"Fail to Send Email: {e}")
     finally:
@@ -131,8 +130,8 @@ def send_email(status, message):
             server.quit()
 
 def run_daily_check():
-    """"""
-    check_times = [(8, 0), (10,0), (12,30), (16, 0), (20, 0)]
+    """Check Times"""
+    check_times = [(8, 0), (12, 0), (14, 30), (16, 0), (21, 0)]  
     
     current_state, status = check_moisture()
     display_status(current_state)
@@ -153,8 +152,8 @@ def run_daily_check():
 if __name__ == "__main__":
     try:
         print("\n" + "="*50)
-        print("The Detection System Has been Activated.".center(40))
-        print(f"Detection Time: 8:00, 10:00, 12:30, 16:00, 20:00".center(40)) 
+        print("Soil Sensor System Starts".center(40))
+        print(f"Detection Time: 8:00, 12:00, 14:30, 16:00, 21:00".center(40))
         print("="*50 + "\n")
         
         GPIO.add_event_detect(
@@ -166,6 +165,6 @@ if __name__ == "__main__":
         run_daily_check()
         
     except KeyboardInterrupt:
-        print("\nSystem Has been Stopped.")
+        print("\nSystem Has Stopped.")
     finally:
         GPIO.cleanup()
