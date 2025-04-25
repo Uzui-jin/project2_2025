@@ -20,8 +20,8 @@ receiver_email = "2579693602@qq.com"
 # 
 last_status = None
 status_messages = {
-    True: "[Real-time status] Dry! ✖ (GPIO HIGH)",
-    False: "[Real-time status] Damp ✓ (GPIO LOW)"
+    True: "[Real-time Status] Dry! ✖ (GPIO HIGH)",
+    False: "[Real-time Status] Damp ✓ (GPIO LOW)"
 }
 
 def create_email_html(status, message):
